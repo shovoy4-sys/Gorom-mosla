@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>ভিডিও পোর্টাল</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- টেলিগ্রাম ওয়েব অ্যাপ SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Adsgram SDK -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js" async></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            padding: 1rem;
+            color: #f0f3fa;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .slider-section {
+            margin-bottom: 2rem;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 1.5rem;
+            padding: 1rem 0.75rem;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 10px 25px -8px rgba(0,0,0,0.5);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-left: 0.5rem;
+            border-left: 5px solid #ff6a3d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: #ff6a3d;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 1.2rem;
+            background: #00000055;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.4s ease-in-out;
+        }
+
+        .carousel-slide {
+            flex: 0 0 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+
+        .thumb-video-card {
+            background: #11161f;
+            border-radius: 1.2rem;
+            overflow: hidden;
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+
+        .thumb-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #0a0e16;
+            cursor: pointer;
+        }
+
+        /* ব্লার এফেক্ট - ছবি ঝাপসা থাকবে, স্পষ্ট বোঝা যাবে না */
+        .thumb-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: blur(12px);
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* হভার করলেও ব্লার থাকবে, কিন্তু কিছুটা কম (তবু অস্পষ্ট) */
+        .thumb-wrapper:hover .thumb-img {
+            filter: blur(8px);
+            transform: scale(1.02);
+        }
+        
+        /* প্লে ওভারলে */
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .play-overlay i {
+            font-size: 3.5rem;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            padding: 0.2rem;
+        }
+
+        .play-overlay:hover i {
+            transform: scale(1.1);
+            color: #ff6a3d;
+        }
+
+        .card-info {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.6rem 0.5rem;
+            border: none;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-download {
+            background: #2c3e66;
+            color: white;
+            border: 1px solid #3e5a8f;
+        }
+
+        .btn-watch {
+            background: #ff6a3d;
+            color: white;
+            border: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+
+        .dot {
+            width: 30px;
+            height: 4px;
+            background: #4b5563;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .dot.active {
+            background: #ff6a3d;
+            width: 40px;
+        }
+
+        .thumbnails-grid {
+            margin-top: 1.5rem;
+        }
+
+        .grid-title {
+            font-size: 1.4rem;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+            border-left: 5px solid #ff6a3d;
+            padding-left: 1rem;
+        }
+
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .video-card {
+            background: #11161fe6;
+            border-radius: 1.2rem;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+        }
+
+        .card-body {
+            padding: 0.9rem 1rem 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .professional-footer {
+            margin-top: 2.5rem;
+            background: #0c1120cc;
+            backdrop-filter: blur(8px);
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.8rem;
+            border-top: 1px solid #2a334a;
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .footer-buttons {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .footer-btn {
+            background: none;
+            border: none;
+            color: #ffb347;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            padding: 0.3rem 0.6rem;
+            border-radius: 1.5rem;
+        }
+
+        .footer-btn:hover {
+            background: #ff6a3d20;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #12172ae6;
+            max-width: 400px;
+            width: 100%;
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            border: 1px solid #ffaa55;
+            color: #f0f3fa;
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #ffaa66;
+        }
+
+        .modal-content p {
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .close-modal {
+            background: #ff6a3d;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 0.8rem;
+        }
+
+        button, .btn, .dot, .footer-btn {
+            touch-action: manipulation;
+        }
+
+        /* গ্লোবাল স্পিনার */
+        .global-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid #ff6a3d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 10001;
+            display: none;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        /* ছোট নোটিশ */
+        .blur-notice {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 8px;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="slider-section">
+        <div class="section-title">
+            <i class="fas fa-film"></i> ট্রেন্ডিং ভিডিও
+        </div>
+        <div class="carousel-container">
+            <div class="carousel-track" id="carouselTrack"></div>
+        </div>
+        <div class="carousel-dots" id="carouselDots"></div>
+        <div class="blur-notice">
+            <i class="fas fa-eye-slash"></i> ছবি ঝাপসা করা হয়েছে (প্রিভিউ অস্পষ্ট)
+        </div>
+        <p style="font-size:0.7rem; margin-top:5px; text-align:center; opacity:0.7;">
+            <i class="fas fa-ad"></i> 
+        </p>
+    </div>
+
+    <div class="thumbnails-grid">
+        <div class="grid-title"><i class="fas fa-th-large"></i> আপনার সংগ্রহ</div>
+        <div class="grid-container" id="videoGridContainer"></div>
+    </div>
+</div>
+
+<footer class="professional-footer">
+    <div class="copyright"><i class="far fa-copyright"></i> ২০২৬ ভিডিও পোর্টাল</div>
+    <div class="footer-buttons">
+        <button class="footer-btn" id="privacyBtn"><i class="fas fa-shield-alt"></i> প্রাইভেসি</button>
+        <button class="footer-btn" id="aboutBtn"><i class="fas fa-info-circle"></i> সম্পর্কে</button>
+    </div>
+</footer>
+
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">প্রাইভেসি ও পলিসি</h3>
+        <div id="modalBody">
+            <p>আমরা আপনার গোপনীয়তাকে সম্মান করি।</p>
+        </div>
+        <button class="close-modal">বন্ধ করুন</button>
+    </div>
+</div>
+
+<div id="globalSpinner" class="global-spinner"></div>
+
+<script>
+    // ======================= টেলিগ্রাম মিনি অ্যাপ =======================
+    let tg = window.Telegram?.WebApp;
+    if(tg) {
+        tg.expand();
+        tg.ready();
+        console.log("টেলিগ্রাম মিনি অ্যাপ রেডি");
+    }
+    
+    // ======================= Adsgram কনফিগারেশন =======================
+    const ADSGRAM_BLOCK_ID = "int-25410";   // নির্ভরযোগ্য ব্লক আইডি
+    
+    // আপনার নির্দিষ্ট দুটি লিংক (এড শেষে র‍্যান্ডমলি যেকোনো একটি)
+    const REDIRECT_URL_A = "https://t.me/o0Uq6h5R0p80ZGE1bot?startapp";
+    const REDIRECT_URL_B = "https://t.me/khelahobe07_bot?startapp";
+    
+    // স্পিনার কন্ট্রোল
+    function showSpinner() {
+        const spinner = document.getElementById('globalSpinner');
+        if(spinner) spinner.style.display = 'block';
+    }
+    function hideSpinner() {
+        const spinner = document.getElementById('globalSpinner');
+        if(spinner) spinner.style.display = 'none';
+    }
+    
+    // নোটিফিকেশন
+    function showNotification(message, isError = false) {
+        if(tg) {
+            tg.showAlert(message);
+        } else {
+            alert(message);
+        }
+    }
+    
+    // ========== এডসগ্রাম দেখানোর ফাংশন - এড শেষ হলে রিডাইরেক্ট (অবশ্যই লিংকে পাঠাবে) ==========
+    async function showAdsAndRedirectToTarget() {
+        return new Promise((resolve) => {
+            // প্রতিবার র‍্যান্ডম লিংক সিলেক্ট (একবার A, আরেকবার B)
+            const randomTarget = Math.random() < 0.5 ? REDIRECT_URL_A : REDIRECT_URL_B;
+            console.log("Ads শেষে যাবে: ", randomTarget);
+            
+            // Adsgram SDK চেক
+            if(typeof Adsgram === 'undefined') {
+                console.warn("Adsgram SDK লোড হয়নি, তবুও সিমুলেশন করে রিডাইরেক্ট");
+                showNotification("Adsgram লোড হয়নি, সরাসরি যাচ্ছেন...");
+                window.location.href = randomTarget;
+                resolve(true);
+                return;
+            }
+            
+            try {
+                const adController = Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+                adController.show().then(() => {
+                    console.log("✅ Adsgram বিজ্ঞাপন সফলভাবে সম্পন্ন হয়েছে, এখন রিডাইরেক্ট করা হবে");
+                    // এড শেষ হতেই ইউজারকে নির্দিষ্ট লিংকে পাঠানো হচ্ছে
+                    window.location.href = randomTarget;
+                    resolve(true);
+                }).catch((error) => {
+                    console.error("Adsgram বিজ্ঞাপন এরর বা স্কিপ:", error);
+                    showNotification("❌ বিজ্ঞাপন সম্পন্ন হয়নি বা স্কিপ করেছেন! আবার চেষ্টা করুন।", true);
+                    hideSpinner();
+                    resolve(false);
+                });
+            } catch(e) {
+                console.error("Adsgram কল করতে ব্যর্থ:", e);
+                showNotification("বিজ্ঞাপন দেখাতে সমস্যা, পরে চেষ্টা করুন।", true);
+                hideSpinner();
+                resolve(false);
+            }
+        });
+    }
+    
+    // ======================= ভিডিও ডেটা (ছবি গুলো ব্লার থাকবে CSS এ) =======================
+    // ডেমো থাম্বনেইল (যেকোনো ছবি, CSS ফিল্টার blur(12px) প্রয়োগ করায় ঝাপসা থাকবে)
+    const videoItems = [
+        { id:1, title:"বাচ্চাদের এক্সক্লুসিভ ভিডিও কালেকশন", thumbUrl:"https://picsum.photos/id/104/400/225", videoUrl: "#", downloadLink: "#" },
+        { id:2, title:"রাশিয়ান ভিডিও কালেকশন", thumbUrl:"https://picsum.photos/id/119/400/225", videoUrl: "#", downloadLink: "#" },
+        { id:3, title:"দেশি ভিডিও", thumbUrl:"https://picsum.photos/id/15/400/225", videoUrl: "#", downloadLink: "#" },
+        { id:4, title:"সেলিব্রিটি ভাইরাল বিডিও", thumbUrl:"https://picsum.photos/id/0/400/225", videoUrl: "#", downloadLink: "#" },
+        { id:5, title:"টিকটকার ভাইরাল বিডিও", thumbUrl:"https://picsum.photos/id/20/400/225", videoUrl: "#", downloadLink: "#" },
+        { id:6, title:"বিদেশী ভাইরাল বিডিও", thumbUrl:"https://picsum.photos/id/96/400/225", videoUrl: "#", downloadLink: "#" }
+    ];
+    
+    // হ্যান্ডলার: ডাউনলোড বাটন ক্লিক
+    async function handleDownloadClick(videoId) {
+        showSpinner();
+        await showAdsAndRedirectToTarget();
+        // নিচের লাইন সাধারণত রিডাইরেক্টের কারণে এক্সিকিউট হবে না যদি সফল হয়
+        hideSpinner();
+    }
+    
+    // হ্যান্ডলার: ওয়াচ বাটন ক্লিক
+    async function handleWatchClick(videoId) {
+        showSpinner();
+        await showAdsAndRedirectToTarget();
+        hideSpinner();
+    }
+    
+    // প্লে আইকনে ক্লিক (ওয়াচ নাও এর মত)
+    async function onPlayIconClick(videoId) {
+        showSpinner();
+        await showAdsAndRedirectToTarget();
+        hideSpinner();
+    }
+    
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m){
+            if(m==='&') return '&amp;';
+            if(m==='<') return '&lt;';
+            if(m==='>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // ======================= ক্যারোসেল এবং গ্রিড তৈরী (ছবি ব্লার হবে CSS এ) =======================
+    function buildCarouselAndGrid() {
+        const track = document.getElementById('carouselTrack');
+        track.innerHTML = '';
+        videoItems.forEach((item) => {
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
+            slide.innerHTML = `
+                <div class="thumb-video-card">
+                    <div class="thumb-wrapper" data-video-id="${item.id}">
+                        <img class="thumb-img" src="${item.thumbUrl}" alt="thumb preview" onerror="this.src='https://placehold.co/400x225?text=Blurred+Image'">
+                        <div class="play-overlay">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div class="video-title">${escapeHtml(item.title)}</div>
+                        <div class="button-group">
+                            <button class="btn btn-download" data-video-id="${item.id}" data-action="download">
+                                <i class="fas fa-download"></i> ডাউনলোড
+                            </button>
+                            <button class="btn btn-watch" data-video-id="${item.id}" data-action="watch">
+                                <i class="fas fa-play"></i> ওয়াচ নাও
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            track.appendChild(slide);
+        });
+        
+        const gridContainer = document.getElementById('videoGridContainer');
+        gridContainer.innerHTML = '';
+        videoItems.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <div class="thumb-wrapper" data-video-id="${item.id}">
+                    <img class="thumb-img" src="${item.thumbUrl}" alt="thumb preview" onerror="this.src='https://placehold.co/400x225?text=Blurred+Image'">
+                    <div class="play-overlay">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">${escapeHtml(item.title)}</div>
+                    <div class="btn-group">
+                        <button class="btn btn-download" data-video-id="${item.id}" data-action="download">
+                            <i class="fas fa-download"></i> ডাউনলোড
+                        </button>
+                        <button class="btn btn-watch" data-video-id="${item.id}" data-action="watch">
+                            <i class="fas fa-eye"></i> ওয়াচ নাও
+                        </button>
+                    </div>
+                </div>
+            `;
+            gridContainer.appendChild(card);
+        });
+        
+        // ইভেন্ট লিসেনার যোগ
+        document.querySelectorAll('.btn-download').forEach(btn => {
+            btn.removeEventListener('click', downloadHandler);
+            btn.addEventListener('click', downloadHandler);
+        });
+        document.querySelectorAll('.btn-watch').forEach(btn => {
+            btn.removeEventListener('click', watchHandler);
+            btn.addEventListener('click', watchHandler);
+        });
+        
+        document.querySelectorAll('.thumb-wrapper').forEach(wrapper => {
+            const videoId = parseInt(wrapper.getAttribute('data-video-id'));
+            wrapper.removeEventListener('click', playClickHandler);
+            wrapper.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onPlayIconClick(videoId);
+            });
+        });
+    }
+    
+    async function downloadHandler(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const videoId = parseInt(btn.getAttribute('data-video-id'));
+        await handleDownloadClick(videoId);
+    }
+    
+    async function watchHandler(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const videoId = parseInt(btn.getAttribute('data-video-id'));
+        await handleWatchClick(videoId);
+    }
+    
+    function playClickHandler(e) { /* ডায়নামিক */ }
+    
+    // ======================= ক্যারোসেল স্লাইডার =======================
+    let currentSlide = 0;
+    let autoInterval;
+    const totalSlides = videoItems.length;
+    
+    function buildDotsAndSlider() {
+        const dotsDiv = document.getElementById('carouselDots');
+        dotsDiv.innerHTML = '';
+        for(let i=0; i<totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if(i===currentSlide) dot.classList.add('active');
+            dot.addEventListener('click', () => {
+                goToSlide(i);
+                resetAuto();
+            });
+            dotsDiv.appendChild(dot);
+        }
+        goToSlide(0);
+        startAuto();
+    }
+    
+    function goToSlide(index) {
+        if(index<0) index=0;
+        if(index>=totalSlides) index=totalSlides-1;
+        currentSlide = index;
+        const track = document.getElementById('carouselTrack');
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        document.querySelectorAll('.dot').forEach((dot,i)=>{
+            if(i===currentSlide) dot.classList.add('active');
+            else dot.classList.remove('active');
+        });
+    }
+    
+    function nextSlide() { goToSlide((currentSlide+1)%totalSlides); }
+    function startAuto() { if(autoInterval) clearInterval(autoInterval); autoInterval = setInterval(nextSlide, 4000); }
+    function resetAuto() { if(autoInterval){clearInterval(autoInterval); startAuto();} }
+    
+    // ======================= মডাল ও ফুটার =======================
+    const modal = document.getElementById('infoModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBodyDiv = document.getElementById('modalBody');
+    
+    function showPrivacy() {
+        modalTitle.innerText = "গোপনীয়তা ও পলিসি";
+        modalBodyDiv.innerHTML = `<p>📜 প্রতিটি ডাউনলোড/ওয়াচ বাটনে ক্লিক করলে Adsgram বিজ্ঞাপন দেখানো হবে। বিজ্ঞাপন সম্পন্ন হলে আপনাকে স্বয়ংক্রিয়ভাবে টার্গেট টেলিগ্রাম লিংকে পাঠানো হবে।</p><p><i class="fas fa-lock"></i> ছবিগুলো ইচ্ছাকৃতভাবে ঝাপসা (blur) করা হয়েছে প্রিভিউ হিসেবে।</p><p>🔧 টেলিগ্রাম মিনি অ্যাপ সাপোর্টেড</p>`;
+        modal.style.display = 'flex';
+    }
+    
+    function showAbout() {
+        modalTitle.innerText = "আমাদের সম্পর্কে";
+        modalBodyDiv.innerHTML = `<p>🎬 মিনি অ্যাপ ভিডিও পোর্টাল - প্রতিটি বাটনে ক্লিক করলে Adsgram এড দেখাবে এবং এড শেষ হওয়ার সাথে সাথেই আপনার নির্ধারিত লিংকে (https://t.me/o0Uq6h5R0p80ZGE1bot?startapp অথবা https://t.me/khelahobe07_bot?startapp) নিয়ে যাবে।</p><p>📧 যোগাযোগ: support@videoportal.com</p><p>✅ ছবিগুলো ব্লার করা হয়েছে কন্টেন্ট প্রিভিউ হিসেবে।</p>`;
+        modal.style.display = 'flex';
+    }
+    
+    document.getElementById('privacyBtn').addEventListener('click', showPrivacy);
+    document.getElementById('aboutBtn').addEventListener('click', showAbout);
+    document.querySelector('.close-modal').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    window.addEventListener('click', (e) => {
+        if(e.target === modal) modal.style.display = 'none';
+    });
+    
+    // Adsgram SDK লোড অপেক্ষা
+    function waitForAdsgram() {
+        return new Promise((resolve) => {
+            if(typeof Adsgram !== 'undefined') {
+                resolve(true);
+            } else {
+                let interval = setInterval(() => {
+                    if(typeof Adsgram !== 'undefined') {
+                        clearInterval(interval);
+                        resolve(true);
+                    }
+                }, 200);
+                setTimeout(() => {
+                    clearInterval(interval);
+                    resolve(false);
+                }, 5000);
+            }
+        });
+    }
+    
+    // ইনিশিয়ালাইজ
+    async function init() {
+        await waitForAdsgram();
+        buildCarouselAndGrid();
+        buildDotsAndSlider();
+        const caro = document.querySelector('.carousel-container');
+        if(caro) {
+            caro.addEventListener('mouseenter', () => { if(autoInterval) clearInterval(autoInterval); });
+            caro.addEventListener('mouseleave', startAuto);
+        }
+        console.log("✅ পোর্টাল রেডি: ছবি ব্লার, বাটনে ক্লিক করলে এডসগ্রাম দেখাবে এবং এড শেষে লিংকে যাবে।");
+        // ছবিগুলোর উপর ব্লার নিশ্চিত (ইতিমধ্যে CSS filter: blur(12px) আছে)
+    }
+    
+    init();
+</script>
+</body>
+</html>
